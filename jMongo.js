@@ -4,6 +4,7 @@
 
 var mongodb = require('mongodb');
 var MongoClient = mongodb.MongoClient;
+var ObjectID = mongodb.ObjectID;
 var async = require('async');
 var mutil = require("util");
 
@@ -191,6 +192,8 @@ JMongo.prototype.readOptions = function(sort, limit, skip) {
 //			     database.readOptions(skip, limit, sort)	
 JMongo.prototype.find = function(collection, query, shortList, callback, readOptions ) {
 	try {
+		query = insertObjectIDs(query);
+
 		// Use appropriate find function for options
 		var findFunc = (!readOptions) ? findSimple : findAdvanced;
 		findFunc(collection, query, shortList, this, function(err, results) {
@@ -220,6 +223,7 @@ var findSimple = function(collection, query, shortList, jMongo, callback ) {
 			if(err) callback(err, undefined);
 			else {
 				db.collection(collection).find(query, shortList, {}).toArray( function(err, results) {
+					console.log("results: ",results);
 					if(err) callback( err );
 					else callback(undefined, results);
 				});
@@ -273,6 +277,7 @@ var findAdvanced = function(collection, query, shortList, jMongo, callback, read
 JMongo.prototype.findOne = function(collection, query, shortList, callback ) {
 	try { 
 		var _readOptions = this.readOptions({}, 1, 0);
+		query = insertObjectIDs(query);
 		this.find(collection, query, shortList, function(err, results) {
 			if(err) callback(err);
 			else callback(undefined, results[0]);
@@ -308,6 +313,7 @@ JMongo.prototype.findAndModify = function(collection, query, update, callback ) 
 		this.getConnection( function(err, db) {
 			if(err) callback(err, undefined);
 			else {
+				query = insertObjectIDs(query);
 				db.collection(collection).findAndModify(query, {}, update, {}, function(err, object) {
 					if(err) callback( err );
 					else callback(undefined, object);
@@ -330,6 +336,7 @@ JMongo.prototype.count = function( collection, query, callback ) {
 		this.getConnection( function(err, db) {
 			if(err) callback(err, undefined);
 			else {
+				query = insertObjectIDs(query);
 				db.collection(collection).find(query).count( function(err, result) {
 					if(err) callback( err );
 					else callback(undefined, result);
@@ -349,6 +356,7 @@ JMongo.prototype.count = function( collection, query, callback ) {
 // results: true of false if object exists in database
 JMongo.prototype.exists = function( collection, query, callback ) {
 	try { 
+		query = insertObjectIDs(query);
 		this.find(collection, query, {_id:1}, function(err, results) {
 			if(err) callback(err);
 			else callback(undefined, (results.length > 0));
@@ -391,6 +399,7 @@ JMongo.prototype.update = function( collection, query, change, callback ) {
 		this.getConnection( function(err, db) {
 			if(err) callback( err, undefined);
 			else {
+				query = insertObjectIDs(query);
 				db.collection(collection).update(query, change, {multi:true, safe:true}, function(err) {
 					if(err) callback( new merror( merror.code.FIND, 'Database failed to run update query: '+query, err) );
 					else callback(undefined);
@@ -415,6 +424,7 @@ JMongo.prototype.updateOne = function( collection, query, change, callback ) {
 		this.getConnection( function(err, db) {
 			if(err) callback(err, undefined);
 			else {
+				query = insertObjectIDs(query);
 				db.collection(collection).update(query, change, {multi:false, safe:true}, function(err) {
 					if(err) callback( err );
 					else callback(undefined);
@@ -440,6 +450,7 @@ JMongo.prototype.upsert = function( collection, query, change, callback ) {
 		this.getConnection( function(err, db) {
 			if(err) callback( err );
 			else {
+				query = insertObjectIDs(query);
 				db.collection(collection).update(query, change, {multi:false, upsert:true, safe:true}, function(err) {
 					if(err) callback( err );
 					else callback(undefined);
@@ -507,6 +518,7 @@ JMongo.prototype.remove = function( collection, query, callback ) {
 		this.getConnection( function(err, db) {
 			if(err) callback(err, undefined);
 			else {
+				query = insertObjectIDs(query);
 				db.collection(collection).remove(query, function(err) {
 					if(err) callback( err );
 					else callback(undefined);
@@ -528,6 +540,7 @@ JMongo.prototype.removeOne = function( collection, query, callback ) {
 		this.getConnection( function(err, db) {
 			if(err) callback(err, undefined);
 			else {
+				query = insertObjectIDs(query);
 				db.collection(collection).remove(query, true, function(err) {
 					if(err) callback( err );
 					else callback(undefined);
@@ -698,6 +711,14 @@ JMongo.prototype.removeGridStore = function(name, callback) {
 
 
 // ID
+
+var insertObjectIDs = function( query ) {
+	for( var key in query ) {
+		if(key == "_id")
+			query[key] = ObjectID(query[key]);
+	}
+	return query;
+}
 
 // Converts string id into BSON.ObjectID
 JMongo.prototype.getOID = function(id) {
