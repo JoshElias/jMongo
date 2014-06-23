@@ -192,10 +192,9 @@ JMongo.prototype.readOptions = function(sort, limit, skip) {
 //			     database.readOptions(skip, limit, sort)	
 JMongo.prototype.find = function(collection, query, shortList, callback, readOptions ) {
 	try {
-		query = insertObjectIDs(query);
-
 		// Use appropriate find function for options
 		var findFunc = (!readOptions) ? findSimple : findAdvanced;
+		query = insertObjectIDs(query);
 		findFunc(collection, query, shortList, this, function(err, results) {
 			if(err) callback(err);
 			else callback(undefined, results);
@@ -223,7 +222,6 @@ var findSimple = function(collection, query, shortList, jMongo, callback ) {
 			if(err) callback(err, undefined);
 			else {
 				db.collection(collection).find(query, shortList, {}).toArray( function(err, results) {
-					console.log("results: ",results);
 					if(err) callback( err );
 					else callback(undefined, results);
 				});
@@ -275,14 +273,21 @@ var findAdvanced = function(collection, query, shortList, jMongo, callback, read
 // err: String error returned from mongodb API
 // result: the documents returned that match query
 JMongo.prototype.findOne = function(collection, query, shortList, callback ) {
-	try { 
-		var _readOptions = this.readOptions({}, 1, 0);
-		query = insertObjectIDs(query);
-		this.find(collection, query, shortList, function(err, results) {
-			if(err) callback(err);
-			else callback(undefined, results[0]);
-		}, _readOptions);
+	try {
+		this.getConnection( function(err, db) {
+			if(err) callback(err, undefined);
+			else {
+				query = insertObjectIDs(query);
+				db.collection(collection).findOne(query, shortList, function(err, result) {
+					console.log("result: ",result);
+					if(err) callback( err );
+					else callback(undefined, result);
+				});
+			};
+		});
 	} catch(err) {
+		console.log("FindOne Err");
+		console.log(err.stack)
 		callback( err );
 	};
 };
