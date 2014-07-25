@@ -498,9 +498,9 @@ JMongo.prototype.insert = function( collection, doc, callback ) {
 		this.getConnection( function(err, db) {
 			if(err) callback(err, undefined);
 			else {
-				db.collection(collection).insert(doc, {safe:true}, function(err) {
+				db.collection(collection).insert(doc, {safe:true}, function(err,doc) {
 					if(err) callback( err );
-					else callback(undefined);
+					else callback(undefined, doc);
 				});
 			};
 		});
