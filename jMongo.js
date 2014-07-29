@@ -319,7 +319,7 @@ JMongo.prototype.findAndModify = function(collection, query, update, callback ) 
 			if(err) callback(err, undefined);
 			else {
 				query = insertObjectIDs(query);
-				db.collection(collection).findAndModify(query, {}, update, {}, function(err, object) {
+				db.collection(collection).findAndModify(query, {}, update, {new: true}, function(err, object) {
 					if(err) callback( err );
 					else callback(undefined, object);
 				});
