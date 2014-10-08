@@ -279,7 +279,6 @@ JMongo.prototype.findOne = function(collection, query, shortList, callback ) {
 			else {
 				query = insertObjectIDs(query);
 				db.collection(collection).findOne(query, shortList, function(err, result) {
-					console.log("result: ",result);
 					if(err) callback( err );
 					else callback(undefined, result);
 				});
@@ -405,8 +404,8 @@ JMongo.prototype.update = function( collection, query, change, callback ) {
 			if(err) callback( err, undefined);
 			else {
 				query = insertObjectIDs(query);
-				db.collection(collection).update(query, change, {multi:true, safe:true}, function(err) {
-					if(err) callback( new merror( merror.code.FIND, 'Database failed to run update query: '+query, err) );
+				db.collection(collection).update(query, change, {multi:false, safe:true}, function(err) {
+					if(err) callback(err);
 					else callback(undefined);
 				});
 			};
@@ -734,6 +733,8 @@ JMongo.prototype.getOID = function(id) {
 		return false;
 	};
 };
+
+JMongo.prototype.ObjectID = ObjectID;
 
 
 // MAIN EXPORTS
